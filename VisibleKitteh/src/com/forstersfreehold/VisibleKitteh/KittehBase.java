@@ -64,8 +64,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 
     // surfaceCreated, surfaceChanged and surfaceDestroyed are three interface methods that you create when using surfaceView. 
     // They will be called when the surface (the display window) is initially built in this case shortly after you start the application,) Modified, or destroyed (when you close the application.)
-    
-    
+
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
         Log.i(TAG, "surfaceChanged");
         if (mCamera != null) {

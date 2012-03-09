@@ -17,8 +17,6 @@ import org.opencv.core.CvType;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
-//import com.forstersfreehold.samples.fd.FdActivity;
-//import com.forstersfreehold.samples.fd.R;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -97,22 +95,8 @@ class KittehAndroidView extends KittehBase {
     protected Bitmap processFrame(byte[] data) {
         mYuv.put(0, 0, data);
         
-        // TODO: get rid of the view parts and replace with a 'mode' part (capture/log, door trigger)
-        //      add another setting for output to screen
-//        switch (KittehActivity.viewMode) {
-//        case KittehActivity.VIEW_MODE_GRAY:
-//            Imgproc.cvtColor(mGraySubmat, mRgba, Imgproc.COLOR_GRAY2RGBA, 4);
-//            break;
-//        case KittehActivity.VIEW_MODE_RGBA:
-//            Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
-//            // TODO: This is what I would use if I wanted to tag saved images with 'Success' or 'Failure'
-//            Core.putText(mRgba, "OpenCV + Android", new Point(10, 100), 3/* CV_FONT_HERSHEY_COMPLEX */, 2, new Scalar(255, 0, 0, 255), 3);
-//            break;
-//        case KittehActivity.VIEW_MODE_CANNY:
-//            Imgproc.Canny(mGraySubmat, mIntermediateMat, 80, 100);
-//            Imgproc.cvtColor(mIntermediateMat, mRgba, Imgproc.COLOR_GRAY2BGRA, 4);
-//            break;
-//        }
+        // TODO: Add a 'mode' part (capture/log, door trigger)
+
         
         // TODO: if not displaying can I just use mRgba or something instead of having ot use Imgproc?
         Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
