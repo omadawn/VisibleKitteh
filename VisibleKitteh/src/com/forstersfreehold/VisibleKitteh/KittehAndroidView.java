@@ -10,12 +10,12 @@ import java.util.List;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-//import org.opencv.core.Point;
+import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.CvType;
 import org.opencv.core.Size;
-//import org.opencv.imgproc.Imgproc;
+import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
 //import com.forstersfreehold.samples.fd.FdActivity;
 //import com.forstersfreehold.samples.fd.R;
@@ -33,8 +33,10 @@ class KittehAndroidView extends KittehBase {
     private Mat mIntermediateMat;
     public static float         minObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window? 
     private CascadeClassifier   mCascade;
-    private Scalar RectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
+    private Scalar mRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
     // TODO: Figure out how to have this set in the properties menu
+    private Scalar mTitleColor = new Scalar(255, 0, 0, 255);
+    private String mTitleText = "Miscreant Detector";
 
     public KittehAndroidView(Context context) {
         super(context);
@@ -93,9 +95,6 @@ class KittehAndroidView extends KittehBase {
 
     @Override
     protected Bitmap processFrame(byte[] data) {
-    	// This is where I might be able to just replace the Imgproc stuff with something like 
-    	//mCascade.detectMultiScale(mGray, faces, 1.1, 2, 2 // TODO: objdetect.CV_HAAR_SCALE_IMAGE
-        //        , new Size(faceSize, faceSize));
         mYuv.put(0, 0, data);
         
         // TODO: get rid of the view parts and replace with a 'mode' part (capture/log, door trigger)
@@ -114,18 +113,24 @@ class KittehAndroidView extends KittehBase {
 //            Imgproc.cvtColor(mIntermediateMat, mRgba, Imgproc.COLOR_GRAY2BGRA, 4);
 //            break;
 //        }
-       
+        
+        // TODO: if not displaying can I just use mRgba or something instead of having ot use Imgproc?
+        Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
+        Core.putText(mRgba, mTitleText, new Point(10, 100), 3/* CV_FONT_HERSHEY_COMPLEX */, 1.6, mTitleColor, 2);
+        // TODO: This is also what I would use if I wanted to tag saved images with 'Success' or 'Failure'
+        
         if (mCascade != null) {
             int height = getFrameWidth();
             int objectSize = Math.round(height * minObjectSize); // This is faceSize in the original OpenCV Face detection source. It's the rough size to expect the face to be on the screen so we can tune the size of the rectangle to draw around it.
             List<Rect> objects = new LinkedList<Rect>(); // objects is a list of OpenCV Rect objects or rectangles.This is where detectMultiScale will end up STUFFING the objects it has detected into. 
+            
             // MAGIC HAPPENS Here's where we actually do the detection detecMultiscale detects objects of unspecified size and returns them as a list of rectangels
             mCascade.detectMultiScale(mGraySubmat, objects, 1.1, 2, 2 
                     , new Size(objectSize, objectSize));
             // TODO: Update this so that the rectangle is the correct size.
             // TODO: Only show the rectangle if we are in "Sow on screen preview" mode.
             for (Rect r : objects)
-                Core.rectangle(mRgba, r.tl(), r.br(), RectColor, 3);
+                Core.rectangle(mRgba, r.tl(), r.br(), mRectColor, 3);
             // TODO: trigger a door open if objects > 0 or something like that.
         }
 
