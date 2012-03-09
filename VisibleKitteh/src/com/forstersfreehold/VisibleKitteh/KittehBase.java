@@ -1,4 +1,4 @@
-package org.opencv.VisibleKitteh;
+package com.forstersfreehold.VisibleKitteh;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,7 +12,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public abstract class SampleViewBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
+public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
     private static final String TAG = "Sample::SurfaceView";
 
     private Camera              mCamera;
@@ -22,7 +22,7 @@ public abstract class SampleViewBase extends SurfaceView implements SurfaceHolde
     private byte[]              mFrame;
     private boolean             mThreadRun;
 
-    public SampleViewBase(Context context) {
+    public KittehBase(Context context) {
         super(context);
         mHolder = getHolder();
         mHolder.addCallback(this);
@@ -73,9 +73,9 @@ public abstract class SampleViewBase extends SurfaceView implements SurfaceHolde
         mCamera = Camera.open();
         mCamera.setPreviewCallback(new PreviewCallback() {
             public void onPreviewFrame(byte[] data, Camera camera) {
-                synchronized (SampleViewBase.this) {
+                synchronized (KittehBase.this) {
                     mFrame = data;
-                    SampleViewBase.this.notify();
+                    KittehBase.this.notify();
                 }
             }
         });

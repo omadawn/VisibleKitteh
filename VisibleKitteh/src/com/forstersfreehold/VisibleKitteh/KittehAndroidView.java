@@ -1,4 +1,4 @@
-package org.opencv.VisibleKitteh;
+package com.forstersfreehold.VisibleKitteh;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -17,15 +17,15 @@ import org.opencv.core.CvType;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.objdetect.CascadeClassifier;
-//import org.opencv.samples.fd.FdActivity;
-//import org.opencv.samples.fd.R;
+//import com.forstersfreehold.samples.fd.FdActivity;
+//import com.forstersfreehold.samples.fd.R;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-class Sample1View extends SampleViewBase {
+class KittehAndroidView extends KittehBase {
     private static final String TAG = "VisibleKitteh";
     private Mat mYuv;
     private Mat mRgba;
@@ -35,7 +35,7 @@ class Sample1View extends SampleViewBase {
     
     private CascadeClassifier   mCascade;
 
-    public Sample1View(Context context) {
+    public KittehAndroidView(Context context) {
         super(context);
         try {
         
@@ -91,15 +91,15 @@ class Sample1View extends SampleViewBase {
         //        , new Size(faceSize, faceSize));
         mYuv.put(0, 0, data);
 
-        switch (Sample1Java.viewMode) {
-        case Sample1Java.VIEW_MODE_GRAY:
+        switch (KittehActivity.viewMode) {
+        case KittehActivity.VIEW_MODE_GRAY:
             Imgproc.cvtColor(mGraySubmat, mRgba, Imgproc.COLOR_GRAY2RGBA, 4);
             break;
-        case Sample1Java.VIEW_MODE_RGBA:
+        case KittehActivity.VIEW_MODE_RGBA:
             Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
             Core.putText(mRgba, "OpenCV + Android", new Point(10, 100), 3/* CV_FONT_HERSHEY_COMPLEX */, 2, new Scalar(255, 0, 0, 255), 3);
             break;
-        case Sample1Java.VIEW_MODE_CANNY:
+        case KittehActivity.VIEW_MODE_CANNY:
             Imgproc.Canny(mGraySubmat, mIntermediateMat, 80, 100);
             Imgproc.cvtColor(mIntermediateMat, mRgba, Imgproc.COLOR_GRAY2BGRA, 4);
             break;

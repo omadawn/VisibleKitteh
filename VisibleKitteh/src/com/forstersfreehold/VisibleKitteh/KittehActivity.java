@@ -1,4 +1,4 @@
-package org.opencv.VisibleKitteh;
+package com.forstersfreehold.VisibleKitteh;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -7,7 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 
-public class Sample1Java extends Activity {
+public class KittehActivity extends Activity {
     private static final String TAG             = "Sample::Activity";
 
     public static final int     VIEW_MODE_RGBA  = 0;
@@ -20,7 +20,7 @@ public class Sample1Java extends Activity {
 
     public static int           viewMode        = VIEW_MODE_RGBA;
 
-    public Sample1Java() {
+    public KittehActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
@@ -30,7 +30,7 @@ public class Sample1Java extends Activity {
         Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(new Sample1View(this));
+        setContentView(new KittehAndroidView(this));
     }
 
     @Override
