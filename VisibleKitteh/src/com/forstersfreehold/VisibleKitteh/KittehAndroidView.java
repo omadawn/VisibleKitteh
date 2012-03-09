@@ -91,7 +91,7 @@ class KittehAndroidView extends KittehBase {
         //        , new Size(faceSize, faceSize));
         mYuv.put(0, 0, data);
         
-        //TODO: get rid of the view parts and replace with a 'mode' part (capture/log, door trigger)
+        // TODO: get rid of the view parts and replace with a 'mode' part (capture/log, door trigger)
         //      add another setting for output to screen
         switch (KittehActivity.viewMode) {
         case KittehActivity.VIEW_MODE_GRAY:
@@ -113,7 +113,8 @@ class KittehAndroidView extends KittehBase {
             List<Rect> faces = new LinkedList<Rect>();
             mCascade.detectMultiScale(mGraySubmat, faces, 1.1, 2, 2 // TODO: objdetect.CV_HAAR_SCALE_IMAGE
                     , new Size(faceSize, faceSize));
-
+            // TODO: Update this so that the rectangle is the correct size.
+            // TODO: Only show the rectangle if we are in "Sow on screen preview" mode.
             for (Rect r : faces)
                 Core.rectangle(mRgba, r.tl(), r.br(), new Scalar(0, 255, 0, 255), 3);
         }

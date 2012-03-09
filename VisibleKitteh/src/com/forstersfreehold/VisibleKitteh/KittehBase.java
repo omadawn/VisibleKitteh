@@ -1,4 +1,20 @@
 package com.forstersfreehold.VisibleKitteh;
+//-----------------------------------------
+// VisibleKitteh 
+// Code for The Visible Kitteh Project
+// Computer vision cat head recognition and Door control to prevent my cat from entering the house with prey in his mouth.
+//
+//
+//
+//
+//
+//-------------------------------------------
+
+// TODO: Add a "Sow on screen preview" mode.
+// TODO: Add a "Capture successes and failures mode
+// TODO: Do I want to give the option of tagging the image with the words Success and failure separately or just a checkbox for both. Gottah figure out if I want to add a small white bar to the bottom of the image so as to not write on top of learnable data.
+// TODO: Update settings so that it opens a new window instead of the dialog box.
+// TODO: Add a "Prevent phone from sleeping" setting. It should be enabled by default. Maybe show a warning on first use
 
 import java.io.IOException;
 import java.util.List;
