@@ -13,7 +13,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
-    private static final String TAG = "Sample::SurfaceView";
+    private static final String TAG = "VisibleKitteh::SurfaceView";
 
     private Camera              mCamera;
     private SurfaceHolder       mHolder;
@@ -38,7 +38,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
     }
 
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceCreated");
+        Log.i(TAG, "surfaceChanged");
         if (mCamera != null) {
             Camera.Parameters params = mCamera.getParameters();
             List<Camera.Size> sizes = params.getSupportedPreviewSizes();

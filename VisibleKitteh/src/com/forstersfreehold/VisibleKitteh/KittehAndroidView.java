@@ -26,7 +26,7 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 class KittehAndroidView extends KittehBase {
-    private static final String TAG = "VisibleKitteh";
+    private static final String TAG = "VisibleKitteh::View";
     private Mat mYuv;
     private Mat mRgba;
     private Mat mGraySubmat;
@@ -64,7 +64,7 @@ class KittehAndroidView extends KittehBase {
 
         } catch (IOException e) {
             e.printStackTrace();
-            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+            Log.e(TAG, "Failed to load cascade. IO Exception: " + e);
         }
         
         
@@ -90,7 +90,9 @@ class KittehAndroidView extends KittehBase {
     	//mCascade.detectMultiScale(mGray, faces, 1.1, 2, 2 // TODO: objdetect.CV_HAAR_SCALE_IMAGE
         //        , new Size(faceSize, faceSize));
         mYuv.put(0, 0, data);
-
+        
+        //TODO: get rid of the view parts and replace with a 'mode' part (capture/log, door trigger)
+        //      add another setting for output to screen
         switch (KittehActivity.viewMode) {
         case KittehActivity.VIEW_MODE_GRAY:
             Imgproc.cvtColor(mGraySubmat, mRgba, Imgproc.COLOR_GRAY2RGBA, 4);
