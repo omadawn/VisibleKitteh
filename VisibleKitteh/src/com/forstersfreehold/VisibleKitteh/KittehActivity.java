@@ -3,22 +3,22 @@ package com.forstersfreehold.VisibleKitteh;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+//import android.view.Menu;
+//import android.view.MenuItem;
 import android.view.Window;
 
 public class KittehActivity extends Activity {
     private static final String TAG             = "VisibleKitteh::Activity";
 
-    public static final int     VIEW_MODE_RGBA  = 0;
-    public static final int     VIEW_MODE_GRAY  = 1;
-    public static final int     VIEW_MODE_CANNY = 2;
+//    public static final int     VIEW_MODE_RGBA  = 0;
+//    public static final int     VIEW_MODE_GRAY  = 1;
+//    public static final int     VIEW_MODE_CANNY = 2;
 
-    private MenuItem            mItemPreviewRGBA;
-    private MenuItem            mItemPreviewGray;
-    private MenuItem            mItemPreviewCanny;
+//    private MenuItem            mItemPreviewRGBA;
+//    private MenuItem            mItemPreviewGray;
+//    private MenuItem            mItemPreviewCanny;
 
-    public static int           viewMode        = VIEW_MODE_RGBA;
+//    public static int           viewMode        = VIEW_MODE_RGBA;
 
     public KittehActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -33,17 +33,17 @@ public class KittehActivity extends Activity {
         setContentView(new KittehAndroidView(this));
     }
 
-    @Override
-    // TODO: Replace this. This creates a little popup options menu. I want the new page style preferences menu instead. I'll have to add the preferences saving functions as well.
+ // TODO: Replace this. This creates a little popup options menu. I want the new page style preferences menu instead. I'll have to add the preferences saving functions as well.
+/*    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu");
         mItemPreviewRGBA = menu.add("Preview RGBA");
         mItemPreviewGray = menu.add("Preview GRAY");
         mItemPreviewCanny = menu.add("Canny");
         return true;
-    }
+    }*/
 
-    @Override
+/*    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "Menu Item selected " + item);
         if (item == mItemPreviewRGBA)
@@ -53,5 +53,5 @@ public class KittehActivity extends Activity {
         else if (item == mItemPreviewCanny)
             viewMode = VIEW_MODE_CANNY;
         return true;
-    }
+    }*/
 }

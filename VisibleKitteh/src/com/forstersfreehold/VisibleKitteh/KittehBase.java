@@ -9,6 +9,9 @@ package com.forstersfreehold.VisibleKitteh;
 //
 //
 //-------------------------------------------
+// History
+// 20120306 Initial version cobbled together from OpenCV samples
+// 20120308 Lots of TODOs and comments added throughout the code. Code renamed Initial cleanup started
 
 // TODO: Add a "Show on screen preview" mode.
 // TODO: Add a "Capture successes and failures mode
@@ -18,6 +21,9 @@ package com.forstersfreehold.VisibleKitteh;
 // TODO: Review imports and objects to see what I can remove.
 // TODO: Wrap all the log.i() calls in IF statements.
 // TODO: Review the TODOs in the AndroidManifext.xml file
+// TODO: Write test classes
+// TODO: Convert to Maven project so I can have the test classes executed automagically and stuff.
+// TODO: If an object is detected create a timer so we aren't triggering every milisecond or so. Make that timer do_stuff()
 
 import java.io.IOException;
 import java.util.List;
@@ -34,7 +40,6 @@ import android.view.SurfaceView;
 public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
     private static final String TAG = "VisibleKitteh::SurfaceView";
 
-    // TODO: Make sure I need all of these.
     private Camera              mCamera;
     private SurfaceHolder       mHolder;
     private int                 mFrameWidth;
@@ -92,13 +97,14 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
         }
     }
 
+    // Let's grab ahold of the camera and create a callback 
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i(TAG, "surfaceCreated");
         mCamera = Camera.open();
-        mCamera.setPreviewCallback(new PreviewCallback() {
-            public void onPreviewFrame(byte[] data, Camera camera) {
-                synchronized (KittehBase.this) {
-                    mFrame = data;
+        mCamera.setPreviewCallback(new PreviewCallback() { // This creates a preview callback. Android will then call onPreviewFrame for every frame that is captured by the camera. 
+            public void onPreviewFrame(byte[] data, Camera camera) { // Which is why we need to define onPreviewFrame to define what we are going to do with these images.
+                synchronized (KittehBase.this) { // is KittehBase. redundant here?
+                    mFrame = data; // Data is where android has stuffed the image that the camera has returned.
                     // Now trigger the image proccessing portion of the main runable thread
                     KittehBase.this.notify();
                 }
@@ -137,7 +143,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
                 try {
                     this.wait();
                     // I believe this will only be executed if the condition of our wait() is satisfied. IE notify() or notifyAll() is called
-                    bmp = processFrame(mFrame);
+                    bmp = processFrame(mFrame); // processFrame is defined in KittehAndroidView and is the method that actually looks at a video fram for a detectable object. It returns a bitmap which will contain rectangles drawn around matched objects. We will then layer these ractangles over the preview video.
                 } catch (InterruptedException e) {
                 	// This seems to be one of those rare cases where a stack trace IS actually the appropriate way to handle an exception.
                     Log.i(TAG, "Thread Interrupted");
@@ -150,11 +156,10 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
             	// A canvas is an additional layer that can be added on top of a surface and drawn upon.
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
-                	// bmp is the image that we have gotten from the camera. We're calling drawBitmap on the canvas we just created. The arguments are the bitmap, X, and y starting point of the frame we want to draw, then a null since we aren't using a paint object which is a construct I am not familiar with.
-                	// I'm unclear about how the size is determined. On the other hand I think bmp here might be the box to draw not the image. Need to review bmp and see how that's generated. 
+                	// bmp is a bitmap image of just rectangles which we have drawn around where detected objects are. Now we're going to hand this to drawBitmap which will render it on our canvas. Our canvas if you remember is an extra layer on top of the existing surface which is currently populated with a preview image from the camera.
                     canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
                     mHolder.unlockCanvasAndPost(canvas);
-                } // Further supports my new theory. Now we're blanking out bmp so that we can generate a new one.
+                } 
                 bmp.recycle();
             }
         }
