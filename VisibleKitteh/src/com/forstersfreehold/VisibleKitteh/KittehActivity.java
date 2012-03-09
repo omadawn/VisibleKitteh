@@ -28,12 +28,13 @@ public class KittehActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
-        super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        super.onCreate(savedInstanceState); // savedInstanceState if I remember correctly is where your variables are saved when an activity is shut down but not neccesarily if the app is destroyed. To keep variables across app shutdowns you need to write to a preferences file (which we will do later.)
+        requestWindowFeature(Window.FEATURE_NO_TITLE); // Let's open a window and hide the title bar
         setContentView(new KittehAndroidView(this));
     }
 
     @Override
+    // TODO: Replace this. This creates a little popup options menu. I want the new page style preferences menu instead. I'll have to add the preferences saving functions as well.
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu");
         mItemPreviewRGBA = menu.add("Preview RGBA");

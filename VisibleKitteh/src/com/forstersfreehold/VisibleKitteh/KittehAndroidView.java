@@ -72,8 +72,10 @@ class KittehAndroidView extends KittehBase {
 
     @Override
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
+    	// Call the main surfacChanged method from KittehBase with the exact same values that we got.
         super.surfaceChanged(_holder, format, width, height);
 
+        // But then.. 
         synchronized (this) {
             // initialize Mats before usage
             mYuv = new Mat(getFrameHeight() + getFrameHeight() / 2, getFrameWidth(), CvType.CV_8UC1);

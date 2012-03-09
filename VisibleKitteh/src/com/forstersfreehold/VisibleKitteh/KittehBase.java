@@ -10,11 +10,14 @@ package com.forstersfreehold.VisibleKitteh;
 //
 //-------------------------------------------
 
-// TODO: Add a "Sow on screen preview" mode.
+// TODO: Add a "Show on screen preview" mode.
 // TODO: Add a "Capture successes and failures mode
 // TODO: Do I want to give the option of tagging the image with the words Success and failure separately or just a checkbox for both. Gottah figure out if I want to add a small white bar to the bottom of the image so as to not write on top of learnable data.
 // TODO: Update settings so that it opens a new window instead of the dialog box.
 // TODO: Add a "Prevent phone from sleeping" setting. It should be enabled by default. Maybe show a warning on first use
+// TODO: Review imports and objects to see what I can remove.
+// TODO: Wrap all the log.i() calls in IF statements.
+// TODO: Review the TODOs in the AndroidManifext.xml file
 
 import java.io.IOException;
 import java.util.List;
@@ -31,6 +34,7 @@ import android.view.SurfaceView;
 public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
     private static final String TAG = "VisibleKitteh::SurfaceView";
 
+    // TODO: Make sure I need all of these.
     private Camera              mCamera;
     private SurfaceHolder       mHolder;
     private int                 mFrameWidth;
@@ -40,8 +44,8 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 
     public KittehBase(Context context) {
         super(context);
-        mHolder = getHolder();
-        mHolder.addCallback(this);
+        mHolder = getHolder(); // Returns a holder object that allows you to manipulate an android 'surface' which is what displays stuff on the screen.
+        mHolder.addCallback(this); // Not sure why this is here yet but apparently it's how you use the survaceView interface
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
@@ -53,6 +57,10 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
         return mFrameHeight;
     }
 
+    // surfaceCreated, surfaceChanged and surfaceDestroyed are three interface methods that you create when using surfaceView. 
+    // They will be called when the surface (the display window) is initially built in this case shortly after you start the application,) Modified, or destroyed (when you close the application.)
+    
+    
     public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
         Log.i(TAG, "surfaceChanged");
         if (mCamera != null) {
@@ -78,7 +86,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
             try {
 				mCamera.setPreviewDisplay(null);
 			} catch (IOException e) {
-				Log.e(TAG, "mCamera.setPreviewDisplay fails: " + e);
+				Log.e(TAG, "Unable to set preview display: " + e);
 			}
             mCamera.startPreview();
         }
@@ -91,6 +99,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
             public void onPreviewFrame(byte[] data, Camera camera) {
                 synchronized (KittehBase.this) {
                     mFrame = data;
+                    // Now trigger the image proccessing portion of the main runable thread
                     KittehBase.this.notify();
                 }
             }
@@ -103,6 +112,9 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
         mThreadRun = false;
         if (mCamera != null) {
             synchronized (this) {
+            	// The gui portion of the app has shut down. Let's stop pulling input from the camera and release it.
+            	// Remember in Androidland (tm) I just made that up, the gui is an 'Activity' and separate from what we would normally think of as a 'program' or an 'application' 
+            	// I'm not 100% clear yet but taking this part out might allow us to 'close' the app, which really is just getting rid of the gui portion. But continue to capture from the camera, write to storage (I wrote disk there for a second) and generally muck about. We would have to move this into a shutDown() or stopProcessing() method which we could call from the GUI.
                 mCamera.stopPreview();
                 mCamera.setPreviewCallback(null);
                 mCamera.release();
@@ -111,8 +123,10 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
         }
     }
 
+    // I really have no idea what this does. I don't quite get abstracted methods yet.
     protected abstract Bitmap processFrame(byte[] data);
 
+    // If I understand this properly what we're doing is starting a syncrhonized thread, which seems to be a tiny bit like a loop with ears, and wait()ing for someone to notify() us.
     public void run() {
         mThreadRun = true;
         Log.i(TAG, "Starting processing thread");
@@ -122,18 +136,25 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
             synchronized (this) {
                 try {
                     this.wait();
+                    // I believe this will only be executed if the condition of our wait() is satisfied. IE notify() or notifyAll() is called
                     bmp = processFrame(mFrame);
                 } catch (InterruptedException e) {
+                	// This seems to be one of those rare cases where a stack trace IS actually the appropriate way to handle an exception.
+                    Log.i(TAG, "Thread Interrupted");
                     e.printStackTrace();
                 }
             }
 
+            // If we have an image we can draw on it.
             if (bmp != null) {
+            	// A canvas is an additional layer that can be added on top of a surface and drawn upon.
                 Canvas canvas = mHolder.lockCanvas();
                 if (canvas != null) {
+                	// bmp is the image that we have gotten from the camera. We're calling drawBitmap on the canvas we just created. The arguments are the bitmap, X, and y starting point of the frame we want to draw, then a null since we aren't using a paint object which is a construct I am not familiar with.
+                	// I'm unclear about how the size is determined. On the other hand I think bmp here might be the box to draw not the image. Need to review bmp and see how that's generated. 
                     canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
                     mHolder.unlockCanvasAndPost(canvas);
-                }
+                } // Further supports my new theory. Now we're blanking out bmp so that we can generate a new one.
                 bmp.recycle();
             }
         }
