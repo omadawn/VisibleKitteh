@@ -38,129 +38,171 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
-    private static final String TAG = "VisibleKitteh::SurfaceView";
+	private static final String TAG = "VisibleKitteh::SurfaceView";
+	private Camera kCamera;
+	private SurfaceHolder kHolder;
+	private int kFrameWidth;
+	private int kFrameHeight;
+	private byte[] kFrame;
+	private boolean mThreadRun;
 
-    private Camera              mCamera;
-    private SurfaceHolder       mHolder;
-    private int                 mFrameWidth;
-    private int                 mFrameHeight;
-    private byte[]              mFrame;
-    private boolean             mThreadRun;
+	public KittehBase(Context context) {
+		super(context);
+		kHolder = getHolder(); // Returns a holder object that allows you to
+								// manipulate an android 'surface' which is what
+								// displays stuff on the screen.
+		kHolder.addCallback(this); // Not sure why this is here yet but
+									// apparently it's how you use the
+									// survaceView interface
+		Log.i(TAG, "Instantiated new " + this.getClass());
+	}
 
-    public KittehBase(Context context) {
-        super(context);
-        mHolder = getHolder(); // Returns a holder object that allows you to manipulate an android 'surface' which is what displays stuff on the screen.
-        mHolder.addCallback(this); // Not sure why this is here yet but apparently it's how you use the survaceView interface
-        Log.i(TAG, "Instantiated new " + this.getClass());
-    }
+	public int getFrameWidth() {
+		return kFrameWidth;
+	}
 
-    public int getFrameWidth() {
-        return mFrameWidth;
-    }
+	public int getFrameHeight() {
+		return kFrameHeight;
+	}
 
-    public int getFrameHeight() {
-        return mFrameHeight;
-    }
+	// surfaceCreated, surfaceChanged and surfaceDestroyed are three interface
+	// methods that you create when using surfaceView.
+	// They will be called when the surface (the display window) is initially
+	// built in this case shortly after you start the application,) Modified, or
+	// destroyed (when you close the application.)
 
-    // surfaceCreated, surfaceChanged and surfaceDestroyed are three interface methods that you create when using surfaceView. 
-    // They will be called when the surface (the display window) is initially built in this case shortly after you start the application,) Modified, or destroyed (when you close the application.)
+	public void surfaceChanged(SurfaceHolder _holder, int format, int width,
+			int height) {
+		Log.i(TAG, "surfaceChanged");
+		if (kCamera != null) {
+			Camera.Parameters params = kCamera.getParameters();
+			List<Camera.Size> sizes = params.getSupportedPreviewSizes();
+			kFrameWidth = width;
+			kFrameHeight = height;
 
-    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceChanged");
-        if (mCamera != null) {
-            Camera.Parameters params = mCamera.getParameters();
-            List<Camera.Size> sizes = params.getSupportedPreviewSizes();
-            mFrameWidth = width;
-            mFrameHeight = height;
+			// selecting optimal camera preview size
+			{
+				double minDiff = Double.MAX_VALUE;
+				for (Camera.Size size : sizes) {
+					if (Math.abs(size.height - height) < minDiff) {
+						kFrameWidth = size.width;
+						kFrameHeight = size.height;
+						minDiff = Math.abs(size.height - height);
+					}
+				}
+			}
 
-            // selecting optimal camera preview size
-            {
-                double minDiff = Double.MAX_VALUE;
-                for (Camera.Size size : sizes) {
-                    if (Math.abs(size.height - height) < minDiff) {
-                        mFrameWidth = size.width;
-                        mFrameHeight = size.height;
-                        minDiff = Math.abs(size.height - height);
-                    }
-                }
-            }
-
-            params.setPreviewSize(getFrameWidth(), getFrameHeight());
-            mCamera.setParameters(params);
-            try {
-				mCamera.setPreviewDisplay(null);
+			params.setPreviewSize(getFrameWidth(), getFrameHeight());
+			kCamera.setParameters(params);
+			try {
+				kCamera.setPreviewDisplay(null);
 			} catch (IOException e) {
 				Log.e(TAG, "Unable to set preview display: " + e);
 			}
-            mCamera.startPreview();
-        }
-    }
+			kCamera.startPreview();
+		}
+	}
 
-    // Let's grab ahold of the camera and create a callback 
-    public void surfaceCreated(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceCreated");
-        mCamera = Camera.open();
-        mCamera.setPreviewCallback(new PreviewCallback() { // This creates a preview callback. Android will then call onPreviewFrame for every frame that is captured by the camera. 
-            public void onPreviewFrame(byte[] data, Camera camera) { // Which is why we need to define onPreviewFrame to define what we are going to do with these images.
-                synchronized (KittehBase.this) { // is KittehBase. redundant here?
-                    mFrame = data; // Data is where android has stuffed the image that the camera has returned.
-                    // Now trigger the image proccessing portion of the main runable thread
-                    KittehBase.this.notify();
-                }
-            }
-        });
-        (new Thread(this)).start();
-    }
+	// Let's grab ahold of the camera and create a callback
+	public void surfaceCreated(SurfaceHolder holder) {
+		Log.i(TAG, "surfaceCreated");
+		kCamera = Camera.open();
+		kCamera.setPreviewCallback(new PreviewCallback() { // This creates a
+															// preview callback.
+															// Android will then
+															// call
+															// onPreviewFrame
+															// for every frame
+															// that is captured
+															// by the camera.
+			
+			// This is defining the methad that will be called as a callback
+			public void onPreviewFrame(byte[] data, Camera camera) { // Which is
+																		// why
+																		// we
+																		// need
+																		// to
+																		// define
+																		// onPreviewFrame
+																		// to
+																		// define
+																		// what
+																		// we
+																		// are
+																		// going
+																		// to do
+																		// with
+																		// these
+																		// images.
+				synchronized (KittehBase.this) { // is KittehBase. redundant
+													// here?
+					kFrame = data; // Data is where android has stuffed the
+									// image that the camera has returned.
+					// Now trigger the image proccessing portion of the main
+					// runable thread
+					KittehBase.this.notify();
+				}
+			}
+		});
+		(new Thread(this)).start();
+	}
 
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        Log.i(TAG, "surfaceDestroyed");
-        mThreadRun = false;
-        if (mCamera != null) {
-            synchronized (this) {
-            	// The gui portion of the app has shut down. Let's stop pulling input from the camera and release it.
-            	// Remember in Androidland (tm) I just made that up, the gui is an 'Activity' and separate from what we would normally think of as a 'program' or an 'application' 
-            	// I'm not 100% clear yet but taking this part out might allow us to 'close' the app, which really is just getting rid of the gui portion. But continue to capture from the camera, write to storage (I wrote disk there for a second) and generally muck about. We would have to move this into a shutDown() or stopProcessing() method which we could call from the GUI.
-                mCamera.stopPreview();
-                mCamera.setPreviewCallback(null);
-                mCamera.release();
-                mCamera = null;
-            }
-        }
-    }
+	public void surfaceDestroyed(SurfaceHolder holder) {
+		Log.i(TAG, "surfaceDestroyed");
+		mThreadRun = false;
+		if (kCamera != null) {
+			synchronized (this) {
+				// The gui portion of the app has shut down. Let's stop pulling input from the camera and release it. Remember in Androidland (tm) I just made that up, the gui is an 'Activity' and separate from what we would normally think of as a 'program' or an 'application'
+				// I'm not 100% clear yet but taking this part out might allow
+				// us to 'close' the app, which really is just getting rid of
+				// the gui portion. But continue to capture from the camera,
+				// write to storage (I wrote disk there for a second) and
+				// generally muck about. We would have to move this into a
+				// shutDown() or stopProcessing() method which we could call
+				// from the GUI.
+				// I would also want to muck about with the preview generating stuff so I'm not making bitmaps and writing on frames that no-one will ever see.
+				kCamera.stopPreview();
+				kCamera.setPreviewCallback(null);
+				kCamera.release();
+				kCamera = null;
+			}
+		}
+	}
 
-    // I really have no idea what this does. I don't quite get abstracted methods yet.
-    protected abstract Bitmap processFrame(byte[] data);
+	// I really have no idea what this does. I don't quite get abstracted methods yet.
+	protected abstract Bitmap processFrame(byte[] data);
 
-    // If I understand this properly what we're doing is starting a syncrhonized thread, which seems to be a tiny bit like a loop with ears, and wait()ing for someone to notify() us.
-    public void run() {
-        mThreadRun = true;
-        Log.i(TAG, "Starting processing thread");
-        while (mThreadRun) {
-            Bitmap bmp = null;
+	public void run() {
+		mThreadRun = true;
+		Log.i(TAG, "Starting processing thread");
+		while (mThreadRun) {
+			Bitmap bmp = null;
 
-            synchronized (this) {
-                try {
-                    this.wait();
-                    // I believe this will only be executed if the condition of our wait() is satisfied. IE notify() or notifyAll() is called
-                    bmp = processFrame(mFrame); // processFrame is defined in KittehAndroidView and is the method that actually looks at a video fram for a detectable object. It returns a bitmap which will contain rectangles drawn around matched objects. We will then layer these ractangles over the preview video.
-                } catch (InterruptedException e) {
-                	// This seems to be one of those rare cases where a stack trace IS actually the appropriate way to handle an exception.
-                    Log.i(TAG, "Thread Interrupted");
-                    e.printStackTrace();
-                }
-            }
+			synchronized (this) {
+				try {
+					this.wait();
+					bmp = processFrame(kFrame); // processFrame is defined in KittehAndroidView and is the method that actually looks at a video fram for a detectable object. It returns a bitmap which will contain rectangles drawn around matched objects. We will then layer these ractangles over the preview video.
+				} catch (InterruptedException e) {
+					// This seems to be one of those rare cases where a stack trace IS actually the appropriate way to handle an exception.
+					Log.i(TAG, "Thread Interrupted");
+					e.printStackTrace();
+				}
+			}
 
-            // If we have an image we can draw on it.
-            if (bmp != null) {
-            	// A canvas is an additional layer that can be added on top of a surface and drawn upon.
-                Canvas canvas = mHolder.lockCanvas();
-                if (canvas != null) {
-                	// bmp is a bitmap image of just rectangles which we have drawn around where detected objects are. Now we're going to hand this to drawBitmap which will render it on our canvas. Our canvas if you remember is an extra layer on top of the existing surface which is currently populated with a preview image from the camera.
-                    canvas.drawBitmap(bmp, (canvas.getWidth() - getFrameWidth()) / 2, (canvas.getHeight() - getFrameHeight()) / 2, null);
-                    mHolder.unlockCanvasAndPost(canvas);
-                } 
-                bmp.recycle();
-            }
-        }
-    }
+			// If we have an image we can draw on it.
+			if (bmp != null) {
+				// A canvas is an additional layer that can be added on top of a
+				// surface and drawn upon.
+				Canvas canvas = kHolder.lockCanvas();
+				if (canvas != null) {
+					// bmp is a bitmap image of just rectangles which we have drawn around where detected objects are. Now we're going to hand this to drawBitmap which will render it on our canvas. Our canvas if you remember is an extra layer on top of the existing surface which is currently populated with a preview image from the camera.
+					canvas.drawBitmap(bmp,
+							(canvas.getWidth() - getFrameWidth()) / 2,
+							(canvas.getHeight() - getFrameHeight()) / 2, null);
+					kHolder.unlockCanvasAndPost(canvas);
+				}
+				bmp.recycle();
+			}
+		}
+	}
 }

@@ -24,128 +24,124 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 class KittehAndroidView extends KittehBase {
-    private static final String TAG = "VisibleKitteh::View";
-    private Mat mYuv;
-    private Mat mRgba;
-    private Mat mGraySubmat;
-    private Mat mIntermediateMat;
-    public static float         minObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window? 
-    private CascadeClassifier   mCascade;
-    private Scalar mRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
-    // TODO: Figure out how to have this set in the properties menu
-    private Scalar mTitleColor = new Scalar(255, 0, 0, 255);
-    private String mTitleText = "Miscreant Detector";
+	private static final String TAG = "VisibleKitteh::View";
+	private Mat kYUV;
+	private Mat kRGB;
+	private Mat kGreyScale;
+	public static float kMinObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window?
+	private CascadeClassifier kCascade;
+	private Scalar kRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
+	// TODO: Figure out how to have these set in the properties menu
+	private Scalar kTitleColor = new Scalar(255, 0, 0, 255);
+	private String kTitleText = "Miscreant Detector";
 
-    public KittehAndroidView(Context context) {
-        super(context);
-        try {
-        
-        	// Open the pre-trained Haar Cascade Classifier (or boosted classifier) file. See the training section of the tutorial on how to do this.
-            InputStream is = context.getResources().openRawResource(R.raw.cascade);
-            File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
-            File cascadeFile = new File(cascadeDir, "cascade.xml");
-            FileOutputStream os = new FileOutputStream(cascadeFile); // What? Output?
+	public KittehAndroidView(Context context) {
+		super(context);
+		try {
+			// Open the pre-trained Haar Cascade Classifier (or boosted classifier) file. See the training section of the tutorial on how to do this.
+			// This is a tiny bit of a hack. Theresources we include in our apk are available as raw data but cascadeClassifier only takes a path to a file so we are creating one.
+			InputStream is = context.getResources().openRawResource(
+					R.raw.cascade);
+			File cascadeDir = context.getDir("cascade", Context.MODE_PRIVATE);
+			File cascadeFile = new File(cascadeDir, "cascade.xml");
+			FileOutputStream os = new FileOutputStream(cascadeFile);
+			byte[] buffer = new byte[4096];
+			int bytesRead;
+			while ((bytesRead = is.read(buffer)) != -1) {
+				os.write(buffer, 0, bytesRead);
+			}
+			is.close();
+			os.close();
 
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            // Uh, do we really open the file, read it and re-write it back to the original file? I must be misunderstanding this.
-            while ((bytesRead = is.read(buffer)) != -1) {
-                os.write(buffer, 0, bytesRead);
-            }
-            is.close();
-            os.close();
+			// Create a Cascade Classifier object from the xml file
+			kCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
+			// Make sure we succeeded
+			if (kCascade.empty()) {
+				Log.e(TAG, "Failed to load cascade classifier");
+				kCascade = null;
+			} else
+				Log.i(TAG,
+						"Loaded cascade classifier from "
+								+ cascadeFile.getAbsolutePath());
 
-            // Create a Cascade Classifier object from the xml file
-            mCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
-            // Make sure we succeeded
-            if (mCascade.empty()) {
-                Log.e(TAG, "Failed to load cascade classifier");
-                mCascade = null;
-            } else
-                Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
+			cascadeFile.delete();
+			cascadeDir.delete();
 
-            cascadeFile.delete();
-            cascadeDir.delete();
+		} catch (IOException e) {
+			// e.printStackTrace();
+			Log.e(TAG, "Failed to load cascade. IO Exception: " + e);
+		}
 
-        } catch (IOException e) {
-            // e.printStackTrace();
-            Log.e(TAG, "Failed to load cascade. IO Exception: " + e);
-        }
-        
-        
-    }
+	}
 
-    @Override
-    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-    	// Call the main surfacChanged method from KittehBase with the exact same values that we got.
-        super.surfaceChanged(_holder, format, width, height);
+	@Override
+	public void surfaceChanged(SurfaceHolder _holder, int format, int width,
+			int height) {
+		// Call the main surfacChanged method from KittehBase with the exact
+		// same values that we got.
+		super.surfaceChanged(_holder, format, width, height);
 
-        // But then.. 
-        synchronized (this) {
-            // initialize Mats before usage
-        	// what's Yuv?
-            mYuv = new Mat(getFrameHeight() + getFrameHeight() / 2, getFrameWidth(), CvType.CV_8UC1);
-            mGraySubmat = mYuv.submat(0, getFrameHeight(), 0, getFrameWidth()); // Generate a greyscale version of the image. This will simplify object recognition
-            mRgba = new Mat(); // An RGB version of the image will be used for human viewing
-            mIntermediateMat = new Mat(); // Dunno what this is for
-        }
-    }
+		// But then..
+		synchronized (this) {
+			// initialize Mats before usage
+			kYUV = new Mat(getFrameHeight() + getFrameHeight() / 2,
+					getFrameWidth(), CvType.CV_8UC1);
+			kGreyScale = kYUV.submat(0, getFrameHeight(), 0, getFrameWidth()); // Generate a greyscale version of the image. This will simplify object recognition
+			kRGB = new Mat(); // An RGB version of the image will be used for human viewing
+		}
+	}
 
-    @Override
-    protected Bitmap processFrame(byte[] data) {
-        mYuv.put(0, 0, data);
-        
-        // TODO: Add a 'mode' part (capture/log, door trigger)
+	@Override
+	protected Bitmap processFrame(byte[] data) {
+		kYUV.put(0, 0, data);
+		// TODO: Add a 'mode' part (capture/log, door trigger)
+		// TODO: if not displaying can I just use kRGB or something instead of having ot use Imgproc?
+		Imgproc.cvtColor(kYUV, kRGB, Imgproc.COLOR_YUV420sp2RGB, 4);
+		Core.putText(kRGB, kTitleText, new Point(10, 100),
+				3/* CV_FONT_HERSHEY_COMPLEX */, 1.6, kTitleColor, 2);
+		// TODO: This is also what I would use if I wanted to tag saved images with 'Success' or 'Failure'
 
-        
-        // TODO: if not displaying can I just use mRgba or something instead of having ot use Imgproc?
-        Imgproc.cvtColor(mYuv, mRgba, Imgproc.COLOR_YUV420sp2RGB, 4);
-        Core.putText(mRgba, mTitleText, new Point(10, 100), 3/* CV_FONT_HERSHEY_COMPLEX */, 1.6, mTitleColor, 2);
-        // TODO: This is also what I would use if I wanted to tag saved images with 'Success' or 'Failure'
-        
-        if (mCascade != null) {
-            int height = getFrameWidth();
-            int objectSize = Math.round(height * minObjectSize); // This is faceSize in the original OpenCV Face detection source. It's the rough size to expect the face to be on the screen so we can tune the size of the rectangle to draw around it.
-            List<Rect> objects = new LinkedList<Rect>(); // objects is a list of OpenCV Rect objects or rectangles.This is where detectMultiScale will end up STUFFING the objects it has detected into. 
-            
-            // MAGIC HAPPENS Here's where we actually do the detection detecMultiscale detects objects of unspecified size and returns them as a list of rectangels
-            mCascade.detectMultiScale(mGraySubmat, objects, 1.1, 2, 2 
-                    , new Size(objectSize, objectSize));
-            // TODO: Update this so that the rectangle is the correct size.
-            // TODO: Only show the rectangle if we are in "Sow on screen preview" mode.
-            for (Rect r : objects)
-                Core.rectangle(mRgba, r.tl(), r.br(), mRectColor, 3);
-            // TODO: trigger a door open if objects > 0 or something like that.
-        }
+		if (kCascade != null) {
+			int height = getFrameWidth();
+			int objectSize = Math.round(height * kMinObjectSize); // This is faceSize in the original OpenCV Face detection source. It's the smallest size object to detect. Anything smaller will be ignored.
+			List<Rect> objects = new LinkedList<Rect>(); // objects is a list of OpenCV Rect objects or rectangles. This is where detectMultiScale will end up STUFFING the objects it has detected into.
 
-        Bitmap bmp = Bitmap.createBitmap(getFrameWidth(), getFrameHeight(), Bitmap.Config.ARGB_8888);
+			// MAGIC HAPPENS  Here's where we actually do the detection detecMultiscale detects objects of unspecified size and returns them as a list of rectangels
+			kCascade.detectMultiScale(kGreyScale, objects, 1.1, 2, 2,
+					new Size(objectSize, objectSize));
+			// TODO: Update this so that the rectangle is the correct size.
+			// TODO: Only show the rectangle if we are in
+			// "Sow on screen preview" mode.
+			for (Rect r : objects)
+				Core.rectangle(kRGB, r.tl(), r.br(), kRectColor, 3);
+			// TODO: trigger a door open if objects > 0 or something like that.
+		}
 
-        if (Utils.matToBitmap(mRgba, bmp))
-            return bmp;
+		Bitmap bmp = Bitmap.createBitmap(getFrameWidth(), getFrameHeight(),
+				Bitmap.Config.ARGB_8888);
 
-        bmp.recycle();
-        return null;
-    }
+		if (Utils.matToBitmap(kRGB, bmp))
+			return bmp;
 
-    @Override
-    public void run() {
-        super.run();
+		bmp.recycle();
+		return null;
+	}
 
-        synchronized (this) {
-            // Explicitly deallocate Mats
-            if (mYuv != null)
-                mYuv.release();
-            if (mRgba != null)
-                mRgba.release();
-            if (mGraySubmat != null)
-                mGraySubmat.release();
-            if (mIntermediateMat != null)
-                mIntermediateMat.release();
+	@Override
+	public void run() {
+		super.run();
 
-            mYuv = null;
-            mRgba = null;
-            mGraySubmat = null;
-            mIntermediateMat = null;
-        }
-    }
+		synchronized (this) {
+			// Explicitly deallocate Mats
+			if (kYUV != null)
+				kYUV.release();
+			if (kRGB != null)
+				kRGB.release();
+			if (kGreyScale != null)
+				kGreyScale.release();
+			kYUV = null;
+			kRGB = null;
+			kGreyScale = null;
+		}
+	}
 }
