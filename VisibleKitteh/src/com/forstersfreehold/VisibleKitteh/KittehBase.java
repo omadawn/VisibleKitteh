@@ -24,6 +24,7 @@ package com.forstersfreehold.VisibleKitteh;
 // TODO: Write test classes
 // TODO: Convert to Maven project so I can have the test classes executed automagically and stuff.
 // TODO: If an object is detected create a timer so we aren't triggering every milisecond or so. Make that timer do_stuff()
+// TODO: Go through the log calls and make sure that we are calling them with the correct log level. Thats what the letter after Log indicates. IE Logi is informational, Log.e is error, etc.
 
 import java.io.IOException;
 import java.util.List;
@@ -48,12 +49,8 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 
 	public KittehBase(Context context) {
 		super(context);
-		kHolder = getHolder(); // Returns a holder object that allows you to
-								// manipulate an android 'surface' which is what
-								// displays stuff on the screen.
-		kHolder.addCallback(this); // Not sure why this is here yet but
-									// apparently it's how you use the
-									// survaceView interface
+		kHolder = getHolder(); // Returns a holder object that allows you to manipulate an android 'surface' which is what displays stuff on the screen.
+		kHolder.addCallback(this); // Not sure why this is here yet but apparently it's how you use the survaceView interface
 		Log.i(TAG, "Instantiated new " + this.getClass());
 	}
 
@@ -65,11 +62,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 		return kFrameHeight;
 	}
 
-	// surfaceCreated, surfaceChanged and surfaceDestroyed are three interface
-	// methods that you create when using surfaceView.
-	// They will be called when the surface (the display window) is initially
-	// built in this case shortly after you start the application,) Modified, or
-	// destroyed (when you close the application.)
+	// surfaceCreated, surfaceChanged and surfaceDestroyed are three interface methods that you create when using surfaceView. They will be called when the surface (the display window) is initially built in this case shortly after you start the application,) Modified, or destroyed (when you close the application.)
 
 	public void surfaceChanged(SurfaceHolder _holder, int format, int width,
 			int height) {
@@ -80,6 +73,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 			kFrameWidth = width;
 			kFrameHeight = height;
 
+			// TODO: Stick this somewhere global or pass it around so the Sample collector can use it.
 			// selecting optimal camera preview size
 			{
 				double minDiff = Double.MAX_VALUE;
@@ -107,39 +101,14 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 	public void surfaceCreated(SurfaceHolder holder) {
 		Log.i(TAG, "surfaceCreated");
 		kCamera = Camera.open();
-		kCamera.setPreviewCallback(new PreviewCallback() { // This creates a
-															// preview callback.
-															// Android will then
-															// call
-															// onPreviewFrame
-															// for every frame
-															// that is captured
-															// by the camera.
+		kCamera.setPreviewCallback(new PreviewCallback() { // This creates a preview callback. Android will then call onPreviewFrame for every frame that is captured by the camera.
 			
 			// This is defining the methad that will be called as a callback
-			public void onPreviewFrame(byte[] data, Camera camera) { // Which is
-																		// why
-																		// we
-																		// need
-																		// to
-																		// define
-																		// onPreviewFrame
-																		// to
-																		// define
-																		// what
-																		// we
-																		// are
-																		// going
-																		// to do
-																		// with
-																		// these
-																		// images.
+			public void onPreviewFrame(byte[] data, Camera camera) { // Which is why we need to define onPreviewFrame to define what we are going to do with these images.
 				synchronized (KittehBase.this) { // is KittehBase. redundant
 													// here?
-					kFrame = data; // Data is where android has stuffed the
-									// image that the camera has returned.
-					// Now trigger the image proccessing portion of the main
-					// runable thread
+					kFrame = data; // Data is where android has stuffed the image that the camera has returned.
+					// Now trigger the image proccessing portion of the main runable thread
 					KittehBase.this.notify();
 				}
 			}
@@ -153,13 +122,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 		if (kCamera != null) {
 			synchronized (this) {
 				// The gui portion of the app has shut down. Let's stop pulling input from the camera and release it. Remember in Androidland (tm) I just made that up, the gui is an 'Activity' and separate from what we would normally think of as a 'program' or an 'application'
-				// I'm not 100% clear yet but taking this part out might allow
-				// us to 'close' the app, which really is just getting rid of
-				// the gui portion. But continue to capture from the camera,
-				// write to storage (I wrote disk there for a second) and
-				// generally muck about. We would have to move this into a
-				// shutDown() or stopProcessing() method which we could call
-				// from the GUI.
+				// I'm not 100% clear yet but taking this part out might allow us to 'close' the app, which really is just getting rid of the gui portion. But continue to capture from the camera, write to storage (I wrote disk there for a second) and generally muck about. We would have to move this into a shutDown() or stopProcessing() method which we could call from the GUI.
 				// I would also want to muck about with the preview generating stuff so I'm not making bitmaps and writing on frames that no-one will ever see.
 				kCamera.stopPreview();
 				kCamera.setPreviewCallback(null);

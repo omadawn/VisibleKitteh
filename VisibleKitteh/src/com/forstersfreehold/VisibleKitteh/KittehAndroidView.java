@@ -28,12 +28,18 @@ class KittehAndroidView extends KittehBase {
 	private Mat kYUV;
 	private Mat kRGB;
 	private Mat kGreyScale;
-	public static float kMinObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window?
-	private CascadeClassifier kCascade;
-	private Scalar kRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
+	private CascadeClassifier kCascade; // Thiis stores the cascade file after we have read it in. If I switch to storing a classifier on the SD card I would want to add a path variable.
 	// TODO: Figure out how to have these set in the properties menu
+	// TODO: Also move default values into the strings resource file
+	public static float kMinObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window?
+	private Scalar kRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
 	private Scalar kTitleColor = new Scalar(255, 0, 0, 255);
 	private String kTitleText = "Miscreant Detector";
+	private boolean kCollectSampleData = true; // This will default to true as soon as sample collection is completed
+	
+	//if (kCollectSampleData == true) { // Tif isn't valid here bt there's a scopeissue if I ncreate this inside of the constructor. Gotta figure that out
+		KittehSampleCollector kSampleCollector = new KittehSampleCollector(); 
+	//}
 
 	public KittehAndroidView(Context context) {
 		super(context);
@@ -101,6 +107,12 @@ class KittehAndroidView extends KittehBase {
 				3/* CV_FONT_HERSHEY_COMPLEX */, 1.6, kTitleColor, 2);
 		// TODO: This is also what I would use if I wanted to tag saved images with 'Success' or 'Failure'
 
+		// Collect samples _before_ I check if there's a cat.
+		// This will keep me from accidentally triggering something w/ whatever I do with the image and also if I'm collecting I want to do it every time not just when there's a cat
+		if (kCollectSampleData == true) {
+			kSampleCollector.checkForKritter(kGreyScale);
+		}
+		
 		if (kCascade != null) {
 			int height = getFrameWidth();
 			int objectSize = Math.round(height * kMinObjectSize); // This is faceSize in the original OpenCV Face detection source. It's the smallest size object to detect. Anything smaller will be ignored.
