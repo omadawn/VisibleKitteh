@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">VisibleKitteh</string>
     <string name="Version">0.2</string>
+    <string name="CollectSampleData">True</string>
+    <string name="TitleDefaultText">MiscreantDetector</string>
 </resources>

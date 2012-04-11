@@ -47,6 +47,7 @@ public abstract class KittehBase extends SurfaceView implements SurfaceHolder.Ca
 	private byte[] kFrame;
 	private boolean mThreadRun;
 
+	
 	public KittehBase(Context context) {
 		super(context);
 		kHolder = getHolder(); // Returns a holder object that allows you to manipulate an android 'surface' which is what displays stuff on the screen.

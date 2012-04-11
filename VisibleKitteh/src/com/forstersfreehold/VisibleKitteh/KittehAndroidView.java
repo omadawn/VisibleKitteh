@@ -36,13 +36,58 @@ class KittehAndroidView extends KittehBase {
 	private Scalar kTitleColor = new Scalar(255, 0, 0, 255);
 	private String kTitleText = "Miscreant Detector";
 	private boolean kCollectSampleData = true; // This will default to true as soon as sample collection is completed
+	private boolean kCritterFound = false; // 
 	
 	//if (kCollectSampleData == true) { // Tif isn't valid here bt there's a scopeissue if I ncreate this inside of the constructor. Gotta figure that out
 		KittehSampleCollector kSampleCollector = new KittehSampleCollector(); 
 	//}
 
+//	public KittehAndroidView() {
+//		if (kCollectSampleData == true) { // Tif isn't valid here bt there's a scopeissue if I ncreate this inside of the constructor. Gotta figure that out
+//			KittehSampleCollector kSampleCollector = new KittehSampleCollector(); 
+//		}
+//	}	
+		
 	public KittehAndroidView(Context context) {
 		super(context);
+		kMinObjectSize = 0.5f; // Anything smaller than this (roughly) will be ignored. I dunno what "f" is yet. I think I'm going to change this to just ObjectSize and make it not setable. Either that or make it setable in the preferences window?
+		kRectColor = new Scalar(0, 255, 0, 255); // The color of the box we are going to draw around discovered objects.
+		kTitleColor = new Scalar(255, 0, 0, 255);
+		//kTitleText = "Miscreant Detector";
+		//kCollectSampleData = true; 
+		
+		Log.i(TAG,"CollectSampleData contains [" + getResources().getText(R.string.CollectSampleData) + "]");
+		
+		// TODO: Fix this. It says it isn't set to true. I'm guessing there's a newline or something screwing me up.
+		if (getResources().getText(R.string.CollectSampleData).equals("True")) {
+//		if (getString(R.string.CollectSampleData) == "True") { // For some inexplicably assinine reason this returns an integer not a string.
+			Log.i(TAG,"Setting Collect Samples to true");
+			kCollectSampleData = true;
+		} else {
+			Log.i(TAG,"Setting Collect Samples to false");
+			kCollectSampleData = false;
+		}
+		
+		kTitleText = getResources().getString(R.string.TitleDefaultText);
+
+		// OMFUCKINGGOD this keeps returning a fucking chartsequence. I can't get a fucking string. getString returns a fucking integer, getText returns a fucking charsequence.
+		//kTitleText = getResources().getText(R.string.TitleDefaultText);
+		//kTitleText = getResources().
+				
+		
+		// These two are very non obvious R.string.TitleDefaultColor doesn't exist. I assume there's a different R.somehint to use
+		//kTitleColor = (getResources().getInteger(0), getResources().getInteger(1), getResources().getInteger(2), getResources().getInteger(3));
+		//kTitleColor = getResources().getIntArray(R.string.  TitleDefaultColor);
+		//translation = getString(R.string.Water);
+
+		
+		
+		// Not sure this is the right place for this. Yeah, some fricking scope issue here
+		// TODO: Monkey with fucking scope some more
+		//if (kCollectSampleData == true) { // Tif isn't valid here bt there's a scopeissue if I ncreate this inside of the constructor. Gotta figure that out
+		//	KittehSampleCollector kSampleCollector = new KittehSampleCollector(context); 
+		//}
+		
 		try {
 			// Open the pre-trained Haar Cascade Classifier (or boosted classifier) file. See the training section of the tutorial on how to do this.
 			// This is a tiny bit of a hack. Theresources we include in our apk are available as raw data but cascadeClassifier only takes a path to a file so we are creating one.
@@ -65,10 +110,8 @@ class KittehAndroidView extends KittehBase {
 			if (kCascade.empty()) {
 				Log.e(TAG, "Failed to load cascade classifier");
 				kCascade = null;
-			} else
-				Log.i(TAG,
-						"Loaded cascade classifier from "
-								+ cascadeFile.getAbsolutePath());
+			} else 
+				Log.i(TAG,"Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
 
 			cascadeFile.delete();
 			cascadeDir.delete();
@@ -94,6 +137,8 @@ class KittehAndroidView extends KittehBase {
 					getFrameWidth(), CvType.CV_8UC1);
 			kGreyScale = kYUV.submat(0, getFrameHeight(), 0, getFrameWidth()); // Generate a greyscale version of the image. This will simplify object recognition
 			kRGB = new Mat(); // An RGB version of the image will be used for human viewing
+			// I don't think kGreyScale is actually greyscale submat is just copying the image. I think I'll need to make it greyscale later.
+			
 		}
 	}
 
@@ -110,7 +155,9 @@ class KittehAndroidView extends KittehBase {
 		// Collect samples _before_ I check if there's a cat.
 		// This will keep me from accidentally triggering something w/ whatever I do with the image and also if I'm collecting I want to do it every time not just when there's a cat
 		if (kCollectSampleData == true) {
-			kSampleCollector.checkForKritter(kGreyScale);
+			Log.i(TAG,"Checking for a critter");
+//			kCritterFound = kSampleCollector.checkForKritter(kGreyScale);
+			kCritterFound = kSampleCollector.checkForKritter(kYUV);
 		}
 		
 		if (kCascade != null) {
@@ -129,8 +176,11 @@ class KittehAndroidView extends KittehBase {
 			// TODO: trigger a door open if objects > 0 or something like that.
 		}
 
-		Bitmap bmp = Bitmap.createBitmap(getFrameWidth(), getFrameHeight(),
-				Bitmap.Config.ARGB_8888);
+		Bitmap bmp = Bitmap.createBitmap(getFrameWidth(), getFrameHeight(), Bitmap.Config.ARGB_8888);
+		
+		if (kCritterFound == true ) {
+			// try writing the image here
+		}
 
 		if (Utils.matToBitmap(kRGB, bmp))
 			return bmp;
